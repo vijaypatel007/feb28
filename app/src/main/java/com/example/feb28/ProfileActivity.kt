@@ -7,11 +7,15 @@ import com.bumptech.glide.Glide
 import com.example.feb28.databinding.ActivtyProfileBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 
 class ProfileActivity : AppCompatActivity() {
 
     private var binding: ActivtyProfileBinding? = null
+    private lateinit var auth: FirebaseAuth
+    lateinit var mGoogleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,6 +24,14 @@ class ProfileActivity : AppCompatActivity() {
 
         val account: GoogleSignInAccount? = GoogleSignIn.getLastSignedInAccount(this)
 
+        auth = FirebaseAuth.getInstance()
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+
+        /// set data - ui
         setData(account)
 
         binding?.textViewLogout?.setOnClickListener {
@@ -44,6 +56,7 @@ class ProfileActivity : AppCompatActivity() {
 
     private fun logout() {
         FirebaseAuth.getInstance().signOut()
+        mGoogleSignInClient.signOut()
         startActivity(Intent(this, MainActivity::class.java))
         finishAffinity()
     }

@@ -6,16 +6,36 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <View
+        android:id="@+id/topView"
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:background="@drawable/bg_top_login_screen"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/textViewMyGalleryApp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="My Gallery App"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/topView"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias=".75"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias=".3" />
+        app:layout_constraintVertical_bias=".8" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/ic_google"
+        app:layout_constraintBottom_toBottomOf="@id/textViewLoginWithGoogle"
+        app:layout_constraintEnd_toStartOf="@id/textViewLoginWithGoogle"
+        app:layout_constraintTop_toTopOf="@id/textViewLoginWithGoogle" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/textViewLoginWithGoogle"
@@ -27,6 +47,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textViewMyGalleryApp"
-        app:layout_constraintVertical_bias=".3" />
+        app:layout_constraintVertical_bias=".85" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

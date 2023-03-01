@@ -1,18 +1,35 @@
 package com.example.feb28
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
-import com.example.feb28.databinding.ActivityHomeBinding
+import androidx.room.Room
 import com.example.feb28.adapter.GalleryAdapter
+import com.example.feb28.dataClass.Data
+import com.example.feb28.dataClass.ResponseBody
+import com.example.feb28.databinding.ActivityHomeBinding
+import com.example.feb28.roomDB.GalleryDatabase
+import com.example.feb28.roomDB.GalleryDetail
+import com.example.feb28.viewModel.ApiViewModel
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
 
     private var binding: ActivityHomeBinding? = null
 
-    private var list = ArrayList<String>()
+    private var list = ArrayList<Data>()
     private var galleryAdapter: GalleryAdapter? = null
+
+    var viewModel = ApiViewModel()
+
+    private lateinit var galleryDatabase: GalleryDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,20 +40,81 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        list.add("https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")
-        list.add("https://images.pexels.com/photos/386025/pexels-photo-386025.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")
-        list.add("https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1/photos/386025/pexels-photo-386025.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")
-        list.add("https://images.pexels.com/photos/3358707/pexels-photo-3358707.png?auto=compress&cs=tinysrgb&w=600")
-        list.add("https://images.pexels.com/photos/5429056/pexels-photo-5429056.png?auto=compress&cs=tinysrgb&w=600")
-        list.add("https://images.pexels.com/photos/5589865/pexels-photo-5589865.jpeg?auto=compress&cs=tinysrgb&w=600")
-        list.add("https://images.pexels.com/photos/5536030/pexels-photo-5536030.jpeg?auto=compress&cs=tinysrgb&w=600")
-        list.add("https://images.pexels.com/photos/773471/pexels-photo-773471.jpeg?auto=compress&cs=tinysrgb&w=600")
-        list.add("https://images.pexels.com/photos/3081750/pexels-photo-3081750.jpeg?auto=compress&cs=tinysrgb&w=600")
+        /// handle response
+        handleResponse()
 
+        galleryDatabase =
+            Room.databaseBuilder(this, GalleryDatabase::class.java, "Gallery_DB").build()
+
+        /// condition
+        if (checkForInternet(this)) {
+            viewModel.callPostApi()
+        } else {
+            binding?.loader?.visibility = View.GONE
+            galleryDatabase.galleryDao().getAllRecord().observe(this) {
+                if (it != null) {
+                    list.clear()
+                    it.forEach {
+                        list.add(Data(avatar = it.nameUrl))
+                        galleryAdapter?.notifyDataSetChanged()
+                    }
+                } else {
+                    Toast.makeText(this, "Please Internet ON once", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+
+        binding?.loader?.visibility = View.VISIBLE
         binding?.recyclerViewPostOffice?.apply {
             layoutManager = GridLayoutManager(context, 2)
             galleryAdapter = GalleryAdapter(list)
             adapter = galleryAdapter
         }
+    }
+
+    private fun handleResponse() {
+        viewModel.listLiveData.observe(this) { responseBody ->
+            when (responseBody) {
+                is ResponseBody.Error -> {
+                    Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show()
+                }
+                is ResponseBody.Loading -> {
+                    binding?.loader?.visibility = View.VISIBLE
+                }
+                is ResponseBody.Success -> {
+                    binding?.loader?.visibility = View.GONE
+                    responseBody.data?.dataList?.let { list.addAll(it) }
+                    galleryAdapter?.notifyDataSetChanged()
+
+                    responseBody.data?.dataList?.forEach {
+                        GlobalScope.launch {
+                            galleryDatabase.galleryDao().insertImage(
+                                GalleryDetail(
+                                    0,
+                                    it.avatar.toString()
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+fun checkForInternet(context: Context): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    val network = connectivityManager.activeNetwork ?: return false
+
+    val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+
+    return when {
+        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+        else -> false
     }
 }

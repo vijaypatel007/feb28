@@ -4,9 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.feb28.dataClass.Data
 import com.example.feb28.databinding.RowItemGalleryBinding
 
-class GalleryAdapter(private val list: ArrayList<String>) : RecyclerView.Adapter<GalleryAdapter.ViewHolder>() {
+class GalleryAdapter(private val list: ArrayList<Data>) : RecyclerView.Adapter<GalleryAdapter.ViewHolder>() {
 
     inner class ViewHolder(val binding: RowItemGalleryBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -27,7 +28,7 @@ class GalleryAdapter(private val list: ArrayList<String>) : RecyclerView.Adapter
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         with(holder.binding) {
             Glide.with(imageViewPicture.context)
-                .load(list[position])
+                .load(list[position].avatar)
                 .centerCrop()
                 .fitCenter()
                 .into(imageViewPicture)
